@@ -14,7 +14,7 @@ class RemoteSocketServer(SocketServer.StreamRequestHandler):
     '''
     def handle(self):
         remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        remote.connect(("0.0.0.0", 233))
+        remote.connect(("chashuibiao.org", 233))
         logbook.info("connect the remote server")
 
         while True:
