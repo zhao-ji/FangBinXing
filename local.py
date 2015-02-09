@@ -13,23 +13,16 @@ class RemoteSocketServer(SocketServer.StreamRequestHandler):
     tcp
     '''
     def handle(self):
-        self.data = self.request.recv(4096).strip()
-        remote_address, remote_port = self.data.split(":")
-        logbook.info("address: {}, port: {}".format(
-                     remote_address, remote_port))
-
         remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        remote.connect((remote_address, int(remote_port)))
-        self.process(self.request, remote)
+        remote.connect(("chashuibiao.org", 233))
+        logbook.info("connect the remote server")
 
-
-    def process(self, locate, remote):
-        fdset = [locate, remote]
         while True:
+            fdset = [self.connection, remote]
             r, w, e = select.select(fdset, [], [])
             if locate in r:
                 locate_data = locate.recv(4096)
-                logbook.info("locate: {}".format(locate_data))
+                logbook.info("locate: {}".format(repr(locate_data)))
                 result = remote.send(locate_data)
                 logbook.info("result: {}".format(result))
                 if result <= 0:
@@ -37,7 +30,7 @@ class RemoteSocketServer(SocketServer.StreamRequestHandler):
                     break
             if remote in r:
                 remote_data = remote.recv(4096)
-                logbook.info("remote: {}".format(remote_data))
+                logbook.info("remote: {}".format(repr(remote_data)))
                 result = locate.send(remote_data)
                 logbook.info("result: {}".format(result))
                 if result <= 0:
@@ -47,7 +40,7 @@ class RemoteSocketServer(SocketServer.StreamRequestHandler):
 
 if __name__ == "__main__":
     server = SocketServer.ThreadingTCPServer(
-        ("", 233), RemoteSocketServer,
+        ("", 666), RemoteSocketServer,
         )
-    logbook.info("start server at port: 233")
+    logbook.info("start server at port: 666")
     server.serve_forever()
