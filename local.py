@@ -14,14 +14,14 @@ class RemoteSocketServer(SocketServer.StreamRequestHandler):
     '''
     def handle(self):
         remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        remote.connect(("chashuibiao.org", 233))
+        remote.connect(("0.0.0.0", 233))
         logbook.info("connect the remote server")
 
         while True:
             fdset = [self.connection, remote]
             r, w, e = select.select(fdset, [], [])
-            if locate in r:
-                locate_data = locate.recv(4096)
+            if self.connection in r:
+                locate_data = self.connection.recv(4096)
                 logbook.info("locate: {}".format(repr(locate_data)))
                 result = remote.send(locate_data)
                 logbook.info("result: {}".format(result))
@@ -31,7 +31,7 @@ class RemoteSocketServer(SocketServer.StreamRequestHandler):
             if remote in r:
                 remote_data = remote.recv(4096)
                 logbook.info("remote: {}".format(repr(remote_data)))
-                result = locate.send(remote_data)
+                result = self.connection.send(remote_data)
                 logbook.info("result: {}".format(result))
                 if result <= 0:
                     logbook.info("breaking down")

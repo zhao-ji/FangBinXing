@@ -57,7 +57,7 @@ class Socks5Server(SocketServer.StreamRequestHandler):
             "response address: {}:{}".format(ret_addr, ret_port))
 
         # 4. Response
-        reply_prefix = b"\x05\x00\x00"
+        reply_prefix = b"\x05\x00\x00\x01"
 
         # server response:
         #    field1: SOCKS protocol version, 1 byte
@@ -80,11 +80,10 @@ class Socks5Server(SocketServer.StreamRequestHandler):
             struct.pack(">H", ret_port),
             )
 
-
         reply = b"{}{}".format(reply_prefix, reply_suffix)
         self.request.send(reply)
 
-        self.process(self.connection, remote)
+        self.process(self.request, remote)
 
     def process(self, locate, remote):
         fdset = [locate, remote]
