@@ -15,8 +15,13 @@ class Socks5Server(SocketServer.StreamRequestHandler):
     '''
     def handle(self):
         # 1. Authorization
-        self.request.recv(262)
+        # The SOCKS5 protocol is defined in RFC 1928
+        auth_shake_1 = self.request.recv(262)
         self.request.send(b"\x05\x00")
+        logbook.info(
+            "auth shake: recieve {}  send {}"
+            .format(repr(auth_shake_1), repr(b"\x05\x00"))
+            )
 
         # 2. Request
         data = self.rfile.read(4)
@@ -44,17 +49,16 @@ class Socks5Server(SocketServer.StreamRequestHandler):
 
         # port number in a network byte order, 2 bytes
         raw_port_data = self.rfile.read(2)
-        port = struct.unpack('>H', raw_port_data)
-        port = port[0]
+        port = struct.unpack('>H', raw_port_data)[0]
         logbook.info("request port is {}".format(port))
 
         # 3. Connect
         remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         remote.connect((addr, port))
-        logbook.info("request address: {}:{}".format(addr, port))
+        logbook.info("dist-app address {}:{}".format(addr, port))
         ret_addr, ret_port = remote.getsockname()
         logbook.info(
-            "response address: {}:{}".format(ret_addr, ret_port))
+            "server-bind address: {}:{}".format(ret_addr, ret_port))
 
         # 4. Response
         reply_prefix = b"\x05\x00\x00\x01"
@@ -69,12 +73,6 @@ class Socks5Server(SocketServer.StreamRequestHandler):
         #       0x03 = Domain name
         #    field6: network byte order port number, 2 bytes
 
-        ## if addrtype == 1:       # IPv4
-        ##     reply_content = b"0x01{}".format(socket.inet_aton(addr))
-        ## elif addrtype == 3:     # Domain name
-        ##     reply_content = b"0x03{}{}".format(
-        ##         chr(domain_name_length), addr)
-
         reply_suffix = b"{}{}".format(
             socket.inet_aton(ret_addr),
             struct.pack(">H", ret_port),
@@ -86,25 +84,15 @@ class Socks5Server(SocketServer.StreamRequestHandler):
         self.process(self.request, remote)
 
     def process(self, locate, remote):
-        fdset = [locate, remote]
+        fdset = [local, remote]
         while True:
             r, w, e = select.select(fdset, [], [])
             if locate in r:
-                logbook.info(locate.getsockname())
-                locate_data = locate.recv(4096)
-                logbook.info("locate: {}".format(repr(locate_data)))
-                result = remote.send(locate_data)
-                logbook.info("result: {}".format(result))
-                if result <= 0:
+                if remote.send(local.recv(4096)) <= 0:
                     logbook.info("local breaking down")
                     break
             if remote in r:
-                logbook.info(remote.getsockname())
-                remote_data = remote.recv(4096)
-                logbook.info("remote: {}".format(repr(remote_data)))
-                result = locate.send(remote_data)
-                logbook.info("result: {}".format(result))
-                if result <= 0:
+                if local.send(remote.recv(4096)) <= 0:
                     logbook.info("remote breaking down")
                     break
 
