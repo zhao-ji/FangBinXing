@@ -83,11 +83,11 @@ class Socks5Server(SocketServer.StreamRequestHandler):
 
         self.process(self.request, remote)
 
-    def process(self, locate, remote):
+    def process(self, local, remote):
         fdset = [local, remote]
         while True:
             r, w, e = select.select(fdset, [], [])
-            if locate in r:
+            if local in r:
                 if remote.send(local.recv(4096)) <= 0:
                     logbook.info("local breaking down")
                     break
