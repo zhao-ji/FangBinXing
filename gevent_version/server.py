@@ -9,7 +9,8 @@ import logbook
 
 
 def handle(local, addr):
-    addr_raw = self.request.recv(1024)
+    logbook.info(addr)
+    addr_raw = local.recv(1024).strip()
     addr = eval(addr_raw)
     remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     remote.connect(addr)
@@ -30,6 +31,6 @@ def process(local, remote):
 
 
 if __name__ == "__main__":
-    server = StreamServer(("", 666), handle)
-    logbook.info("start server at port: 666")
+    server = StreamServer(("", 233), handle)
+    logbook.info("start server at port: 233")
     server.serve_forever()
