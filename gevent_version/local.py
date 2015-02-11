@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 # -*- coding: utf8 -*-
 
+from gevent import select
 from gevent import socket
-from gevent import spawn
 from gevent.server import StreamServer
 import logbook
 
@@ -14,16 +14,20 @@ def handle(local, address):
     remote.connect(("chashuibiao.org", 233))
     logbook.info("connect the remote server")
 
-    logbook.info("OUT")
-    spawn(process, local, remote)
-    logbook.info("IN")
-    spawn(process, remote, local)
+    process(local, remote)
 
 def process(local, remote):
-    local_data = local.recv(4096)
-    logbook.info("local data: {}".format(repr(local_data)))
-    result = remote.send(local_data)
-    logbook.info("result: {}".format(result))
+    fdset = [local, remote]
+    while True:
+        r, w, e = select.select(fdset, [], [])
+        if local in r:
+            if remote.send(local.recv(4096)) <= 0:
+                logbook.info("local breaking down")
+                break
+        if remote in r:
+            if local.send(remote.recv(4096)) <= 0:
+                logbook.info("remote breaking down")
+                break
 
 
 if __name__ == "__main__":
