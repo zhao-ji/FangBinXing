@@ -9,7 +9,7 @@ from gevent.server import StreamServer
 
 import logbook
 
-import icmp import icmp_pack, icmp_unpack
+import icmp
 
 REMOTE_ADDR = ("chashuibiao.org", 233)
 
@@ -57,7 +57,7 @@ def handle(local, address):
 
     # 5. Communicate
     goal_addr = (addr, port)
-    remote.send(icmp_pack(repr(goal_addr)))
+    remote.send(icmp.pack(repr(goal_addr)))
     process(local, remote)
 
 def process(local, remote):
@@ -65,11 +65,11 @@ def process(local, remote):
     while True:
         r, w, e = select.select(fdset, [], [])
         if local in r:
-            if remote.send(icmp_pack(local.recv(4096))) <= 0:
+            if remote.send(icmp.pack(local.recv(4096))) <= 0:
                 logbook.info("local breaking down")
                 break
         if remote in r:
-            if local.send(icmp_unpack(remote.recv(4096))) <= 0:
+            if local.send(icmp.unpack(remote.recv(4096))) <= 0:
                 logbook.info("remote breaking down")
                 break
 
