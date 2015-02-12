@@ -87,7 +87,7 @@ def main():
 
     logbook.info("start connecting...")
     server = SocketServer.ThreadingTCPServer(('', 666), Socks5Server)
-    logbook.info("start server at localhost in 233")
+    logbook.info("start server at localhost in 666")
     server.serve_forever()
 
 
