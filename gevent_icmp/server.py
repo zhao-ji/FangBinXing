@@ -30,14 +30,15 @@ class ICMPServer(SocketServer.BaseServer):
 
     def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True):
         """Constructor.  May be extended, do not override."""
-        BaseServer.__init__(self, server_address, RequestHandlerClass)
+        SocketServer.BaseServer.__init__(
+            self, server_address, RequestHandlerClass)
         self.socket = socket.socket(self.address_family,
                                     self.socket_type,
                                     self.protocol,
                                     )
         if bind_and_activate:
             self.server_bind()
-            self.server_activate()
+            # self.server_activate()
 
     def server_bind(self):
         """Called by constructor to bind the socket.
@@ -50,16 +51,25 @@ class ICMPServer(SocketServer.BaseServer):
         self.socket.bind(self.server_address)
         self.server_address = self.socket.getsockname()
 
-    def server_activate(self):
-        """Called by constructor to activate the server.
+    # def server_activate(self):
+    #     """Called by constructor to activate the server.
 
-        May be overridden.
+    #     May be overridden.
+
+    #     """
+    #     self.socket.listen(self.request_queue_size)
+
+    def fileno(self):
+        """Return socket file number.
+
+        Interface required by select().
 
         """
-        self.socket.listen(self.request_queue_size)
+        return self.socket.fileno()
 
 
-class ForkedBaseServer(SocketServer.ForkingMixIn, SocketServer.ICMPServer):
+
+class ThreadedBaseServer(SocketServer.ThreadingMixIn, ICMPServer):
     pass
 
 
@@ -106,7 +116,9 @@ def main():
     local_log.push_application()
 
     logbook.info("start connecting...")
-    server = ForkedBaseServer(('0.0.0.0', 233), ICMPRequestHandler)
+    server = ThreadedBaseServer(
+        ('0.0.0.0', 233), ICMPRequestHandler,
+        )
     logbook.info("start server at localhost in 233")
     server.serve_forever()
 
