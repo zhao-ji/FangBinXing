@@ -62,20 +62,20 @@ def do_one(dest_addr, timeout,payload):
     my_socket.close()
     return delay
 #The sniffer part starts here..!!!
-def writer(d):
-	f = open('/root/log.txt','a')
-	f.write(d)
-def clearfile():
-	f = open('/root/log.txt','w')
-	f.write("")
-def reader():
-	f = open('/root/log.txt','r')
-	con = f.readline()
-	content = con.replace("@@","")
-	clearfile()
-	return content
+# def writer(d):
+# 	f = open('/root/log.txt','a')
+# 	f.write(d)
+# def clearfile():
+# 	f = open('/root/log.txt','w')
+# 	f.write("")
+# def reader():
+# 	f = open('/root/log.txt','r')
+# 	con = f.readline()
+# 	content = con.replace("@@","")
+# 	clearfile()
+# 	return content
 def startsniffing():
-	HOST = '192.168.157.128'
+	HOST = '192.168.1.135'
 	s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
 	s.bind((HOST, 0))
 	s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
@@ -86,15 +86,15 @@ def startsniffing():
 		d2 = str(data[1])
 		data1 = re.search('@@(.*)', d1)
 		datapart = data1.group(0)
-		#print datapart
-		writer(datapart)
-		#command = data1.group(0)
-		#cmd = command[2:]
-		#ip = d2[2:-5]
-		#print command
-		#print ip
-		#print data
-		print reader()
+		print datapart
+		# writer(datapart)
+		command = data1.group(0)
+		cmd = command[2:]
+		ip = d2[2:-5]
+		print command
+		print ip
+		print data
+		# print reader()
 thread.start_new_thread(startsniffing,())
 ip = raw_input("Enter the destination IP: ")
 delay = 1

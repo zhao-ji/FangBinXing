@@ -1,33 +1,33 @@
 import os, sys, socket, struct, select, time , threading ,re
- 
 
-ICMP_ECHO_REQUEST = 8 
- 
- 
+
+ICMP_ECHO_REQUEST = 8
+
+
 def checksum(source_string):
-    
+
     sum = 0
     countTo = (len(source_string)/2)*2
     count = 0
     while count<countTo:
         thisVal = ord(source_string[count + 1])*256 + ord(source_string[count])
         sum = sum + thisVal
-        sum = sum & 0xffffffff 
+        sum = sum & 0xffffffff
         count = count + 2
- 
+
     if countTo<len(source_string):
         sum = sum + ord(source_string[len(source_string) - 1])
-        sum = sum & 0xffffffff 
- 
+        sum = sum & 0xffffffff
+
     sum = (sum >> 16)  +  (sum & 0xffff)
     sum = sum + (sum >> 16)
     answer = ~sum
     answer = answer & 0xffff
-	# Swap bytes. 
+	# Swap bytes.
     answer = answer >> 8 | (answer << 8 & 0xff00)
     return answer
- 
- 
+
+
 def send_one_ping(my_socket, dest_addr, ID, onlydata):
     data = "@@"+onlydata
     dest_addr  =  socket.gethostbyname(dest_addr)
@@ -44,8 +44,8 @@ def send_one_ping(my_socket, dest_addr, ID, onlydata):
     )
     packet = header + data
     my_socket.sendto(packet, (dest_addr, 1)) # Don't know about the 1
- 
- 
+
+
 def do_one(dest_addr, timeout,payload):
     icmp = socket.getprotobyname("icmp")
     try:
@@ -54,13 +54,13 @@ def do_one(dest_addr, timeout,payload):
         if errno == 1:
             # Operation not permitted
             msg = msg + (
-                
+
             )
             raise socket.error(msg)
         raise # raise the original error
- 
+
     my_ID = os.getpid() & 0xFFFF
- 
+
     send_one_ping(my_socket, dest_addr, my_ID,payload)
     my_socket.close()
     return delay
@@ -93,7 +93,7 @@ for i in range(1,2000):
         #print ip
         print cmd   # Holding the command to execute
         print ip	#Hoslding the destination address to send the ping
-        output = execute(cmd)
-        for line in output.readlines():
-            do_one(ip,delay,line)
+        # output = execute(cmd)
+        # for line in output.readlines():
+        #     do_one(ip,delay,line)
 # s.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
