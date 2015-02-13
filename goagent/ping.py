@@ -89,44 +89,51 @@ import os, sys, socket, struct, select, time
 ICMP_ECHO_REQUEST = 8 # Seems to be the same on Solaris.
 
 
-def checksum(source_string):
-    """
-    I'm not too confident that this is right but testing seems
-    to suggest that it gives the same answers as in_cksum in ping.c
-    """
-    sum = 0
-    countTo = (len(source_string)/2)*2
-    count = 0
-    while count<countTo:
-        thisVal = ord(source_string[count + 1])*256 + ord(source_string[count])
-        sum = sum + thisVal
-        sum = sum & 0xffffffff # Necessary?
-        count = count + 2
-
-    if countTo<len(source_string):
-        sum = sum + ord(source_string[len(source_string) - 1])
-        sum = sum & 0xffffffff # Necessary?
-
-    sum = (sum >> 16)  +  (sum & 0xffff)
-    sum = sum + (sum >> 16)
-    answer = ~sum
-    answer = answer & 0xffff
-
-    # Swap bytes. Bugger me if I know why.
-    answer = answer >> 8 | (answer << 8 & 0xff00)
-
-    return answer
-
-# def carry_around_add(a, b):
-#     c = a + b
-#     return (c & 0xffff) + (c >> 16)
+# def checksum1(source_string):
+#     """
+#     I'm not too confident that this is right but testing seems
+#     to suggest that it gives the same answers as in_cksum in ping.c
+#     """
+#     sum = 0
+#     countTo = (len(source_string)/2)*2
+#     count = 0
+#     while count<countTo:
+#         thisVal = ord(source_string[count + 1])*256 + ord(source_string[count])
+#         sum = sum + thisVal
+#         sum = sum & 0xffffffff # Necessary?
+#         count = count + 2
 #
-# def checksum(msg):
-#     s = 0
-#     for i in range(0, len(msg), 2):
-#         w = ord(msg[i]) + (ord(msg[i+1]) << 8)
-#         s = carry_around_add(s, w)
-#     return ~s & 0xffff
+#     if countTo<len(source_string):
+#         sum = sum + ord(source_string[len(source_string) - 1])
+#         sum = sum & 0xffffffff # Necessary?
+#
+#     sum = (sum >> 16)  +  (sum & 0xffff)
+#     sum = sum + (sum >> 16)
+#     answer = ~sum
+#     answer = answer & 0xffff
+#     print "\n", "1 ", answer, "\n"
+#
+#     # Swap bytes. Bugger me if I know why.
+#     answer = answer >> 8 | (answer << 8 & 0xff00)
+#     print "2 ", answer, "\n"
+#
+#     return answer
+
+def carry_around_add(a, b):
+    c = a + b
+    return (c & 0xffff) + (c >> 16)
+
+def checksum(msg):
+    if len(msg)%2 is 1:
+        msg += b'\x00'
+
+    s = 0
+    for i in range(0, len(msg), 2):
+        w = ord(msg[i]) + (ord(msg[i+1]) << 8)
+        s = carry_around_add(s, w)
+
+    answer = ~s & 0xffff
+    return answer >> 8 | (answer << 8 & 0xff00)
 
 def receive_one_ping(my_socket, ID, timeout):
     """
@@ -232,6 +239,6 @@ def verbose_ping(dest_addr, timeout = 2, count = 4):
 
 if __name__ == '__main__':
     verbose_ping("heise.de")
-    verbose_ping("google.com")
-    verbose_ping("a-test-url-taht-is-not-available.com")
+    verbose_ping("baidu.com")
+    verbose_ping("bandwagon.chashuibiao.org")
     verbose_ping("192.168.1.1")

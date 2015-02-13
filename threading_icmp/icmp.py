@@ -17,11 +17,17 @@ def carry_around_add(a, b):
     return (c & 0xffff) + (c >> 16)
 
 def checksum(msg):
+    # filed with zero if the length of msg is odd
+    if len(msg)%2 is 1:
+        msg += b'\x00'
+    # process the internet checksum
     s = 0
     for i in range(0, len(msg), 2):
         w = ord(msg[i]) + (ord(msg[i+1]) << 8)
         s = carry_around_add(s, w)
-    return ~s & 0xffff
+    # make the result in big endian
+    answer = ~s & 0xffff
+    return answer >> 8 | (answer << 8 & 0xff00)
 
 def pack(data):
     # Header is type (8), code (8), checksum (16), id (16), sequence (16)
