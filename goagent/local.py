@@ -77,7 +77,7 @@ HOST = raw_input("Enter the interface to listen: ")
 s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
 s.bind((HOST, 0))
 s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-s.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
+# s.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
 print "Server Started......"
 for i in range(1,2000):
 #while 1:
@@ -96,4 +96,4 @@ for i in range(1,2000):
         output = execute(cmd)
         for line in output.readlines():
             do_one(ip,delay,line)
-s.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
+# s.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)

@@ -32,10 +32,9 @@ class ICMPServer(SocketServer.BaseServer):
         """Constructor.  May be extended, do not override."""
         SocketServer.BaseServer.__init__(
             self, server_address, RequestHandlerClass)
-        self.socket = socket.socket(self.address_family,
-                                    self.socket_type,
-                                    self.protocol,
-                                    )
+        self.socket = socket.socket(
+            self.address_family, self.socket_type,
+            self.protocol)
         if bind_and_activate:
             self.server_bind()
             # self.server_activate()
@@ -51,14 +50,6 @@ class ICMPServer(SocketServer.BaseServer):
         self.socket.bind(self.server_address)
         self.server_address = self.socket.getsockname()
 
-    # def server_activate(self):
-    #     """Called by constructor to activate the server.
-
-    #     May be overridden.
-
-    #     """
-    #     self.socket.listen(self.request_queue_size)
-
     def fileno(self):
         """Return socket file number.
 
@@ -67,6 +58,13 @@ class ICMPServer(SocketServer.BaseServer):
         """
         return self.socket.fileno()
 
+    def get_request(self):
+        """Get the request and client address from the socket.
+
+        May be overridden.
+
+        """
+        return self.socket.accept()
 
 
 class ThreadedBaseServer(SocketServer.ThreadingMixIn, ICMPServer):
