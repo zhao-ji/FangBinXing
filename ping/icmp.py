@@ -43,7 +43,8 @@ def pack(content):
         init_checksum, identifier, ICMP_ECHO_SEQ)
 
     header_checksum = socket.htons(checksum(header + content))
-    logbook.info(repr(header_checksum))
+    logbook.info(
+        "the checksum is {}".format(repr(header_checksum)))
 
     header = struct.pack(
         "bbHHh",
@@ -70,7 +71,7 @@ def pack_reply(identifier, content):
     return header + content
 
 def unpack(data):
-    return data[8:]
+    return data[28:]
 
 def unpack_reply(data):
-    return data[4:6], data[8:]
+    return data[24:26], data[28:]
