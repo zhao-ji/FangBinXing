@@ -7,15 +7,6 @@ import logbook
 
 import icmp
 
-#SERVER_ADDR = "23.226.226.196"
-SERVER_ADDR = "23.252.105.45"
-
-def ping(content):
-    packet = header + content
-    sock.sendto(packet, (SERVER_ADDR, 0))
-    return sock.recv(4096)
-
-
 if __name__ == "__main__":
     # the public network interface
     HOST = socket.gethostbyname(socket.gethostname())
@@ -33,8 +24,6 @@ if __name__ == "__main__":
             "the identifier is {}".format(repr(identifier)))
         logbook.info("the data is {}".format(repr(data)))
         packet_will_be_sent = icmp.pack_reply(33, data*2)
-        ret = sock.sendto(packet_will_be_sent, addr)
-        # packet = icmp.pack_reply_with_scapy(
-        #     dst_ip=addr[0], identifier=45, content=data)
-        # ret = sock.sendto(packet, addr)
-        logbook.info("send {} bytes data".format(ret))
+        ret = sock.sendto(packet_will_be_sent, (addr[0], 1))
+        logbook.info(
+            "send {} bytes data, data: {}".format(ret, data*2))

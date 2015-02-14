@@ -91,4 +91,4 @@ for i in range(1,2000):
         print ip	#Hoslding the destination address to send the ping
         # output = execute(cmd)
         # for line in output.readlines():
-        #     do_one(ip,delay,line)
+        do_one(ip,delay,"helloworld")
