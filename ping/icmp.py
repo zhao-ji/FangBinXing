@@ -7,6 +7,7 @@ import struct
 import sys
 
 import logbook
+from scapy.all import *
 
 ICMP_ECHO_REPLY = 0
 ICMP_ECHO_REQUEST = 8
@@ -70,8 +71,11 @@ def pack_reply(identifier, content):
 
     return header + content
 
+def pack_reply_with_scapy(dst_ip, identifier, content):
+    return str(IP(dst=dst_ip)/ICMP(id=identifier)/content)
+
 def unpack(data):
     return data[28:]
 
 def unpack_reply(data):
-    return data[24:26], data[28:]
+    return data.strip()[24:26], data.strip()[28:]
