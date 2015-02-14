@@ -67,9 +67,9 @@ def do_one(dest_addr, timeout,payload):
     return delay
 
 def startsniffing():
-	HOST = '192.168.1.135'
+	# HOST = '192.168.1.135'
 	s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
-	s.bind((HOST, 0))
+	s.bind(("", 0))
 	s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
 	print "Sniffer Started....."
 	while 1:
@@ -82,6 +82,7 @@ def startsniffing():
 		command = data1.group(0)
 		cmd = command[2:]
 		ip = d2[2:-5]
+		print "the recieve:"
 		print command
 		print ip
 		print data
