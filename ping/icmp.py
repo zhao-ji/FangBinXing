@@ -16,7 +16,8 @@ ICMP_ECHO_SEQ = 0
 
 
 def get_identifier():
-    return os.getpid() & 0xFFFF
+    # return os.getpid() & 0xFFFF
+    return 0
 
 def carry_around_add(a, b):
     c = a + b
