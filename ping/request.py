@@ -7,8 +7,8 @@ import logbook
 
 import icmp
 
-# SERVER_ADDR = "23.226.226.196"
-SERVER_ADDR = "23.252.105.45"
+SERVER_ADDR = "23.226.226.196"
+# SERVER_ADDR = "23.252.105.45"
 
 
 def ping(content):
