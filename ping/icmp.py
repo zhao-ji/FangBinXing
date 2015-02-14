@@ -54,8 +54,9 @@ def pack(content):
 
     return header + content
 
-def pack_reply(identifier, content):
+def pack_reply(content):
     init_checksum = 0
+    identifier = 0
     header = struct.pack(
         "bbHHh",
         ICMP_ECHO_REPLY, ICMP_ECHO_CODE,
