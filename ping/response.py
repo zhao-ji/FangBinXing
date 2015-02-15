@@ -23,9 +23,7 @@ if __name__ == "__main__":
         identifier, sequence, content = icmp.unpack_reply(raw_data)
         logbook.info(
             "identifier: {}, sequence: {}, data: {}"
-            .format(identifier, sequence, data))
+            .format(identifier, sequence, content))
         packet_will_be_sent = icmp.pack_reply(
-            identifier, sequence, data*2)
+            identifier, sequence, content*2)
         ret = sock.sendto(packet_will_be_sent, (addr[0], 1))
-        logbook.info(
-            "send {} bytes data, data: {}".format(ret, data*2))

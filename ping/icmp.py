@@ -7,13 +7,10 @@ import struct
 import sys
 
 import logbook
-from scapy.all import *
 
 ICMP_ECHO_REPLY = 0
 ICMP_ECHO_REQUEST = 8
 ICMP_ECHO_CODE = 0
-ICMP_ECHO_SEQ = 0
-
 
 def get_identifier():
     # return os.getpid() & 0xFFFF
@@ -32,9 +29,9 @@ def checksum(msg):
     for i in range(0, len(msg), 2):
         w = ord(msg[i]) + (ord(msg[i+1]) << 8)
         s = carry_around_add(s, w)
-    # make the result in big endian
-    answer = ~s & 0xffff
-    return answer >> 8 | (answer << 8 & 0xff00)
+
+    return ~s & 0xffff
+    # return answer >> 8 | (answer << 8 & 0xff00)
 
 def pack(content):
     init_checksum = 0
@@ -57,31 +54,28 @@ def pack(content):
 
 def pack_reply(identifier, sequence, content):
     init_checksum = 0
-    identifier = socket.htons(identifier)
-    sequence = socket.htons(sequence)
+    # identifier = socket.htons(identifier)
+    # sequence = socket.htons(sequence)
+    print repr(identifier), repr(sequence)
     header = struct.pack(
-        "bbHHh",
+        ">bbHHH",
         ICMP_ECHO_REPLY, ICMP_ECHO_CODE,
         init_checksum, identifier, sequence)
 
-    header_checksum = socket.htons(checksum(header + content))
+    header_checksum = checksum(header + content)
     logbook.info(repr(header_checksum))
 
     header = struct.pack(
-        "bbHHh",
+        ">bbHHH",
         ICMP_ECHO_REPLY, ICMP_ECHO_CODE,
         header_checksum, identifier, sequence)
 
     return header + content
 
-def pack_reply_with_scapy(dst_ip, identifier, content):
-    return str(IP(dst=dst_ip)/ICMP(id=identifier)/content)
-
 def unpack(data):
     return data[28:]
 
 def unpack_reply(data):
-    identifier = socket.ntohs(data.strip()[24:26])
-    sequence = socket.htohs(data.strip()[26:28])
-    content = socket.ntohs(data.strip()[28:])
+    identifier, sequence = struct.unpack(">HH", data.strip()[24:28])
+    content = data.strip()[28:]
     return identifier, sequence, content
