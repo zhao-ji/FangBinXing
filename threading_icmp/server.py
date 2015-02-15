@@ -10,6 +10,7 @@ import logbook
 
 import icmp
 
+SERVER_ADDR = ("23.226.226.196", 1)
 
 class ICMPServer(SocketServer.BaseServer):
     """Base class for various socket-based server classes.
@@ -37,7 +38,6 @@ class ICMPServer(SocketServer.BaseServer):
             self.protocol)
         if bind_and_activate:
             self.server_bind()
-            # self.server_activate()
 
     def server_bind(self):
         """Called by constructor to bind the socket.
@@ -47,8 +47,7 @@ class ICMPServer(SocketServer.BaseServer):
         """
         if self.allow_reuse_address:
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.socket.bind(self.server_address)
-        self.server_address = self.socket.getsockname()
+        self.server_address = SERVER_ADDR
 
     def fileno(self):
         """Return socket file number.
@@ -76,7 +75,8 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
     ICMP
     '''
     def handle(self):
-        raw_addr = icmp.unpack(self.request.read(4096).strip())
+        raw_data, client_addr = self.request.recvfrom(4096)
+        identifier, sequence, raw_addr = icmp.unpack_reply(raw_data)
         remote_addr = eval(raw_addr)
         logbook.info("get the remote addr {}".format(remote_addr))
 
@@ -89,7 +89,7 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
 
         while True:
             if self.request in r:
-                locate_data = self.request.recv(4096)
+                locate_data = self.request.recvfrom(4096).strip()
                 logbook.info("locate: {}".format(repr(locate_data)))
                 result = remote.send(locate_data)
                 logbook.info("result: {}".format(result))
@@ -99,7 +99,8 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
             if remote in r:
                 remote_data = remote.recv(4096)
                 logbook.info("remote: {}".format(repr(remote_data)))
-                result = self.request.send(remote_data)
+                packet = icmp.pack_reply(identifier, 0, remote_data)
+                result = self.request.sendto(packet, client_addr)
                 logbook.info("result: {}".format(result))
                 if result <= 0:
                     logbook.info("breaking down")

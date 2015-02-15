@@ -10,7 +10,7 @@ import logbook
 
 import icmp
 
-REMOTE_ADDR = ("chashuibiao.org", 233)
+REMOTE_ADDR = ("chashuibiao.org", 1)
 
 
 class Socks5Server(SocketServer.StreamRequestHandler):
@@ -56,12 +56,13 @@ class Socks5Server(SocketServer.StreamRequestHandler):
         # 4. Connect
         remote = socket.socket(
             socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
-        remote.connect(REMOTE_ADDR)
-        logbook.info("connect the remote server")
+        identifier = self.client_address[1]
+        goal_addr = (addr, port)
+        init_packet = icmp.pack(identifier, 0, repr(goal_addr))
+        remote.sendto(init_packet, REMOTE_ADDR)
+        remote.recv(4096)
 
         # 5. Communicate
-        goal_addr = (addr, port)
-        remote.send(icmp.pack(repr(goal_addr)))
         self.process(self.request, remote)
 
     def process(self, local, remote):
@@ -69,11 +70,12 @@ class Socks5Server(SocketServer.StreamRequestHandler):
         while True:
             r, w, e = select.select(fdset, [], [])
             if local in r:
-                if remote.send(local.recv(4096)) <= 0:
+                packet = icmp.pack(identifier, 0, local.recv(4096))
+                if remote.sendto(packet, REMOTE_ADDR) <= 0:
                     logbook.info("local breaking down")
                     break
             if remote in r:
-                if local.send(remote.recv(4096)) <= 0:
+                if local.send(icmp.unpack(remote.recv(65536))) <= 0:
                     logbook.info("remote breaking down")
                     break
 
