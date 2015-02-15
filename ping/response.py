@@ -20,11 +20,12 @@ if __name__ == "__main__":
     while True:
         raw_data, addr = sock.recvfrom(4096)
         logbook.info("the send address is {}".format(addr))
-        identifier, data = icmp.unpack_reply(raw_data)
+        identifier, sequence, content = icmp.unpack_reply(raw_data)
         logbook.info(
-            "the identifier is {}".format(repr(identifier)))
-        logbook.info("the data is {}".format(repr(data)))
-        packet_will_be_sent = icmp.pack_reply(data*2)
+            "identifier: {}, sequence: {}, data: {}"
+            .format(identifier, sequence, data))
+        packet_will_be_sent = icmp.pack_reply(
+            identifier, sequence, data*2)
         ret = sock.sendto(packet_will_be_sent, (addr[0], 1))
         logbook.info(
             "send {} bytes data, data: {}".format(ret, data*2))

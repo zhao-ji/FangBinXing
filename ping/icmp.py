@@ -55,13 +55,14 @@ def pack(content):
 
     return header + content
 
-def pack_reply(content):
+def pack_reply(identifier, sequence, content):
     init_checksum = 0
-    identifier = 0
+    identifier = socket.htons(identifier)
+    sequence = socket.htons(sequence)
     header = struct.pack(
         "bbHHh",
         ICMP_ECHO_REPLY, ICMP_ECHO_CODE,
-        init_checksum, identifier, ICMP_ECHO_SEQ)
+        init_checksum, identifier, sequence)
 
     header_checksum = socket.htons(checksum(header + content))
     logbook.info(repr(header_checksum))
@@ -69,7 +70,7 @@ def pack_reply(content):
     header = struct.pack(
         "bbHHh",
         ICMP_ECHO_REPLY, ICMP_ECHO_CODE,
-        header_checksum, identifier, ICMP_ECHO_SEQ)
+        header_checksum, identifier, sequence)
 
     return header + content
 
@@ -80,4 +81,7 @@ def unpack(data):
     return data[28:]
 
 def unpack_reply(data):
-    return data.strip()[24:26], data.strip()[28:]
+    identifier = socket.ntohs(data.strip()[24:26])
+    sequence = socket.htohs(data.strip()[26:28])
+    content = socket.ntohs(data.strip()[28:])
+    return identifier, sequence, content
