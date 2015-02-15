@@ -13,8 +13,7 @@ ICMP_ECHO_REQUEST = 8
 ICMP_ECHO_CODE = 0
 
 def get_identifier():
-    # return os.getpid() & 0xFFFF
-    return 0
+    return os.getpid() & 0xFFFF
 
 def carry_around_add(a, b):
     c = a + b
@@ -31,39 +30,32 @@ def checksum(msg):
         s = carry_around_add(s, w)
 
     return ~s & 0xffff
-    # return answer >> 8 | (answer << 8 & 0xff00)
 
 def pack(content):
     init_checksum = 0
     identifier = get_identifier()
     header = struct.pack(
-        "bbHHh",
+        "bbHHH",
         ICMP_ECHO_REQUEST, ICMP_ECHO_CODE,
-        init_checksum, identifier, ICMP_ECHO_SEQ)
+        init_checksum, identifier, 0)
 
-    header_checksum = socket.htons(checksum(header + content))
-    logbook.info(
-        "the checksum is {}".format(repr(header_checksum)))
+    header_checksum = checksum(header + content)
 
     header = struct.pack(
-        "bbHHh",
+        "bbHHH",
         ICMP_ECHO_REQUEST, ICMP_ECHO_CODE,
-        header_checksum, identifier, ICMP_ECHO_SEQ)
+        header_checksum, identifier, 0)
 
     return header + content
 
 def pack_reply(identifier, sequence, content):
     init_checksum = 0
-    # identifier = socket.htons(identifier)
-    # sequence = socket.htons(sequence)
-    print repr(identifier), repr(sequence)
     header = struct.pack(
         ">bbHHH",
         ICMP_ECHO_REPLY, ICMP_ECHO_CODE,
         init_checksum, identifier, sequence)
 
     header_checksum = checksum(header + content)
-    logbook.info(repr(header_checksum))
 
     header = struct.pack(
         ">bbHHH",
