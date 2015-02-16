@@ -27,7 +27,9 @@ class ICMPServer(SocketServer.BaseServer):
 
     request_queue_size = 5
 
-    allow_reuse_address = False
+    allow_reuse_address = True
+
+    max_packet_size = 65536
 
     def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True):
         """Constructor.  May be extended, do not override."""
@@ -63,7 +65,8 @@ class ICMPServer(SocketServer.BaseServer):
         May be overridden.
 
         """
-        return self.socket.accept()
+        # data, client_addr = self.socket.recvfrom(self.max_packet_size)
+        return self.socket, SERVER_ADDR
 
 
 class ThreadedBaseServer(SocketServer.ThreadingMixIn, ICMPServer):
@@ -77,6 +80,7 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         raw_data, client_addr = self.request.recvfrom(4096)
         identifier, sequence, raw_addr = icmp.unpack_reply(raw_data)
+        print repr(raw_addr)
         remote_addr = eval(raw_addr)
         logbook.info("get the remote addr {}".format(remote_addr))
 
@@ -89,9 +93,11 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
 
         while True:
             if self.request in r:
-                locate_data = self.request.recvfrom(4096).strip()
+                locate_data, _ = self.request.recvfrom(4096)
+                identifier, sequence, content = \
+                    icmp.unpack_reply(locate_data)
                 logbook.info("locate: {}".format(repr(locate_data)))
-                result = remote.send(locate_data)
+                result = remote.send(content)
                 logbook.info("result: {}".format(result))
                 if result <= 0:
                     logbook.info("breaking down")
