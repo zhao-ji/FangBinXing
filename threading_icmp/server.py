@@ -27,9 +27,11 @@ class ICMPServer(SocketServer.BaseServer):
 
     request_queue_size = 5
 
-    allow_reuse_address = False
+    allow_reuse_address = True
 
-    def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True):
+    max_packet_size = 8192
+
+    def __init__(self, server_address, RequestHandlerClass, bind_and_activate=False):
         """Constructor.  May be extended, do not override."""
         SocketServer.BaseServer.__init__(
             self, server_address, RequestHandlerClass)
@@ -63,7 +65,8 @@ class ICMPServer(SocketServer.BaseServer):
         May be overridden.
 
         """
-        return self.socket.accept()
+        data, client_addr = self.socket.recvfrom(self.max_packet_size)
+        return (data, self.socket), client_addr
 
 
 class ThreadedBaseServer(SocketServer.ThreadingMixIn, ICMPServer):
@@ -75,23 +78,31 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
     ICMP
     '''
     def handle(self):
-        raw_data, client_addr = self.request.recvfrom(4096)
+        raw_data, self.request = self.request
         identifier, sequence, raw_addr = icmp.unpack_reply(raw_data)
+        logbook.info("raw_addr: {}".format(raw_addr))
         remote_addr = eval(raw_addr)
-        logbook.info("get the remote addr {}".format(remote_addr))
 
         remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         remote.connect(remote_addr)
-        logbook.info("connect the remote server")
+        logbook.info(
+            "connect the remote server: {}".format(remote_addr))
+
+        packet = icmp.pack_reply(identifier, 0, "ok")
+        self.request.sendto(packet, self.client_address)
 
         fdset = [self.request, remote]
+        logbook.info("hello world")
         r, w, e = select.select(fdset, [], [])
 
+        logbook.info("start loop")
         while True:
             if self.request in r:
-                locate_data = self.request.recvfrom(4096).strip()
+                locate_data, _ = self.request.recvfrom(4096)
+                identifier, sequence, content = \
+                    icmp.unpack_reply(locate_data)
                 logbook.info("locate: {}".format(repr(locate_data)))
-                result = remote.send(locate_data)
+                result = remote.send(content)
                 logbook.info("result: {}".format(result))
                 if result <= 0:
                     logbook.info("breaking down")
@@ -100,7 +111,8 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
                 remote_data = remote.recv(4096)
                 logbook.info("remote: {}".format(repr(remote_data)))
                 packet = icmp.pack_reply(identifier, 0, remote_data)
-                result = self.request.sendto(packet, client_addr)
+                result = self.request.sendto(
+                    packet, self.client_address)
                 logbook.info("result: {}".format(result))
                 if result <= 0:
                     logbook.info("breaking down")
