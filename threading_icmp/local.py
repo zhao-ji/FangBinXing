@@ -70,12 +70,13 @@ class Socks5Server(SocketServer.StreamRequestHandler):
         while True:
             r, w, e = select.select(fdset, [], [])
             if local in r:
+                identifier = self.client_address[1]
                 packet = icmp.pack(identifier, 0, local.recv(4096))
                 if remote.sendto(packet, REMOTE_ADDR) <= 0:
                     logbook.info("local breaking down")
                     break
             if remote in r:
-                if local.send(icmp.unpack(remote.recv(65536))) <= 0:
+                if local.send(icmp.unpack(remote.recv(4096))) <= 0:
                     logbook.info("remote breaking down")
                     break
 
