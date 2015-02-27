@@ -58,7 +58,7 @@ class Socks5Server(SocketServer.StreamRequestHandler):
             socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
         identifier = self.client_address[1]
         goal_addr = (addr, port)
-        init_packet = icmp.pack(identifier, 0, repr(goal_addr))
+        init_packet = icmp.pack(identifier, 6666, repr(goal_addr))
         remote.sendto(init_packet, REMOTE_ADDR)
         _ = icmp.unpack(remote.recv(4096))
         logbook.info("first handshake reply: {}".format(_))
@@ -77,7 +77,7 @@ class Socks5Server(SocketServer.StreamRequestHandler):
                 local_data = local.recv(4096)
                 logbook.info("local data: {}".format(repr(local_data)))
                 if len(local_data) > 0:
-                    packet = icmp.pack(identifier, 0, local_data)
+                    packet = icmp.pack(identifier, 8888, local_data)
                     remote.sendto(packet, REMOTE_ADDR)
             if remote in r:
                 logbook.info("remote send")
