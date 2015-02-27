@@ -10,7 +10,7 @@ import logbook
 
 import icmp
 
-REMOTE_ADDR = ("chashuibiao.org", 1)
+REMOTE_ADDR = ("bandwagon.chashuibiao.org", 1)
 
 
 class Socks5Server(SocketServer.StreamRequestHandler):
@@ -71,11 +71,14 @@ class Socks5Server(SocketServer.StreamRequestHandler):
         while True:
             r, w, e = select.select(fdset, [], [])
             if local in r:
-                logbook.info("local send")
+                local_data = local.recv(4096)
+                if len(local_data) == 0:
+                    logbook.info("local breaking down")
+                    break
+                logbook.info(
+                    "local data: {}".format(repr(local_data)))
                 identifier = self.client_address[1]
                 logbook.info("identifier: {}".format(identifier))
-                local_data = local.recv(4096)
-                logbook.info("local data: {}".format(repr(local_data)))
                 if len(local_data) > 0:
                     packet = icmp.pack(identifier, 8888, local_data)
                     remote.sendto(packet, REMOTE_ADDR)
