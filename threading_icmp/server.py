@@ -97,7 +97,6 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
 
             global GLOBAL_DICT
             GLOBAL_DICT[identifier] = remote
-            logbook.warn("GLOBAL_DICT: {}".format(GLOBAL_DICT))
 
             packet = icmp.pack_reply(
                 identifier, sequence, "ok")
@@ -107,14 +106,15 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
             # start exchange the data between the two side
             remote = GLOBAL_DICT[identifier]
             logbook.info("the http body: {}".format(raw_data))
-            logbook.info("remote: {}".format(remote))
-            remote.send(raw_data)
-            remote_recv = ''
-            while True:
-                buf = remote.recv(1024)
-                if not len(buf):
-                    break
-                remote_recv += buf
+            #logbook.info("remote: {}".format(remote))
+            send_length = remote.send(raw_data)
+            logbook.info(send_length)
+            remote_recv = remote.recv(1024)
+            # while True:
+            #     buf = remote.recv(1024)
+            #     if not len(buf):
+            #         break
+            #     remote_recv += buf
             logbook.info("remote_recv: {}".format(remote_recv))
             packet = icmp.pack_reply(
                 identifier, sequence, remote_recv)
@@ -134,8 +134,8 @@ def main():
     local_log.push_application()
 
     logbook.info("start connecting...")
-    server = ThreadedBaseServer(
-        ('0.0.0.0', 233), ICMPRequestHandler,
+    server = ICMPServer(
+        ('0.0.0.0', 1), ICMPRequestHandler,
         )
     logbook.info("start ICMP server")
     server.serve_forever()
