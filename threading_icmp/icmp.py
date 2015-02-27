@@ -28,8 +28,9 @@ def checksum(msg):
     for i in range(0, len(msg), 2):
         w = ord(msg[i]) + (ord(msg[i+1]) << 8)
         s = carry_around_add(s, w)
-
-    return ~s & 0xffff
+    # strange operate
+    answer = ~s & 0xffff
+    return answer >> 8 | (answer << 8 & 0xff00)
 
 def pack(identifier, sequence, content):
     init_checksum = 0

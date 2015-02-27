@@ -60,7 +60,8 @@ class Socks5Server(SocketServer.StreamRequestHandler):
         goal_addr = (addr, port)
         init_packet = icmp.pack(identifier, 0, repr(goal_addr))
         remote.sendto(init_packet, REMOTE_ADDR)
-        remote.recv(4096)
+        _ = icmp.unpack(remote.recv(4096))
+        logbook.info("first handshake reply: {}".format(_))
 
         # 5. Communicate
         self.process(self.request, remote)
@@ -70,12 +71,14 @@ class Socks5Server(SocketServer.StreamRequestHandler):
         while True:
             r, w, e = select.select(fdset, [], [])
             if local in r:
+                logbook.info("local send")
                 identifier = self.client_address[1]
                 packet = icmp.pack(identifier, 0, local.recv(4096))
                 if remote.sendto(packet, REMOTE_ADDR) <= 0:
                     logbook.info("local breaking down")
                     break
             if remote in r:
+                logbook.info("remote send")
                 if local.send(icmp.unpack(remote.recv(4096))) <= 0:
                     logbook.info("remote breaking down")
                     break
