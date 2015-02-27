@@ -88,7 +88,7 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
 
         if sequence == 6666:
             # start connect the web app server
-            remote_addr = eval(raw_addr)
+            remote_addr = eval(raw_data)
             remote = socket.socket(
                 socket.AF_INET, socket.SOCK_STREAM)
             remote.connect(remote_addr)
@@ -97,17 +97,27 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
 
             global GLOBAL_DICT
             GLOBAL_DICT[identifier] = remote
+            logbook.warn("GLOBAL_DICT: {}".format(GLOBAL_DICT))
 
             packet = icmp.pack_reply(
-                identifier, sequence=sequence, "ok")
+                identifier, sequence, "ok")
             self.request.sendto(packet, self.client_address)
 
         elif sequence == 8888:
             # start exchange the data between the two side
             remote = GLOBAL_DICT[identifier]
+            logbook.info("the http body: {}".format(raw_data))
+            logbook.info("remote: {}".format(remote))
             remote.send(raw_data)
+            remote_recv = ''
+            while True:
+                buf = remote.recv(1024)
+                if not len(buf):
+                    break
+                remote_recv += buf
+            logbook.info("remote_recv: {}".format(remote_recv))
             packet = icmp.pack_reply(
-                identifier, sequence=sequence, remote.recv(4096))
+                identifier, sequence, remote_recv)
             self.request.sendto(packet, self.client_address)
 
         else:
