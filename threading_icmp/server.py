@@ -11,6 +11,7 @@ import logbook
 import icmp
 
 SERVER_ADDR = ("23.226.226.196", 1)
+GLOBAL_DICT = {}
 
 class ICMPServer(SocketServer.BaseServer):
     """Base class for various socket-based server classes.
@@ -79,44 +80,40 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
     '''
     def handle(self):
         raw_data, self.request = self.request
-        identifier, sequence, raw_addr = icmp.unpack_reply(raw_data)
-        logbook.info("raw_addr: {}".format(raw_addr))
-        remote_addr = eval(raw_addr)
-
-        remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        remote.connect(remote_addr)
+        identifier, sequence, raw_data = icmp.unpack_reply(raw_data)
         logbook.info(
-            "connect the remote server: {}".format(remote_addr))
+            "identifier: {} sequence: {}"
+            .format(identifier, sequence)
+            )
 
-        packet = icmp.pack_reply(identifier, 0, "ok")
-        self.request.sendto(packet, self.client_address)
+        if sequence == 6666:
+            # start connect the web app server
+            remote_addr = eval(raw_addr)
+            remote = socket.socket(
+                socket.AF_INET, socket.SOCK_STREAM)
+            remote.connect(remote_addr)
+            logbook.info(
+                "connect the remote server: {}".format(remote_addr))
 
-        fdset = [self.request, remote]
-        logbook.info("hello world")
-        r, w, e = select.select(fdset, [], [])
+            global GLOBAL_DICT
+            GLOBAL_DICT[identifier] = remote
 
-        logbook.info("start loop")
-        while True:
-            if self.request in r:
-                locate_data, _ = self.request.recvfrom(4096)
-                identifier, sequence, content = \
-                    icmp.unpack_reply(locate_data)
-                logbook.info("locate: {}".format(repr(locate_data)))
-                result = remote.send(content)
-                logbook.info("result: {}".format(result))
-                if result <= 0:
-                    logbook.info("breaking down")
-                    break
-            if remote in r:
-                remote_data = remote.recv(4096)
-                logbook.info("remote: {}".format(repr(remote_data)))
-                packet = icmp.pack_reply(identifier, 0, remote_data)
-                result = self.request.sendto(
-                    packet, self.client_address)
-                logbook.info("result: {}".format(result))
-                if result <= 0:
-                    logbook.info("breaking down")
-                    break
+            packet = icmp.pack_reply(
+                identifier, sequence=sequence, "ok")
+            self.request.sendto(packet, self.client_address)
+
+        elif sequence == 8888:
+            # start exchange the data between the two side
+            remote = GLOBAL_DICT[identifier]
+            remote.send(raw_data)
+            packet = icmp.pack_reply(
+                identifier, sequence=sequence, remote.recv(4096))
+            self.request.sendto(packet, self.client_address)
+
+        else:
+            logbook.info(
+                "some situation occur, raw_data: {}"
+                .format(raw_data))
 
 
 def main():
@@ -130,7 +127,7 @@ def main():
     server = ThreadedBaseServer(
         ('0.0.0.0', 233), ICMPRequestHandler,
         )
-    logbook.info("start server at localhost in 233")
+    logbook.info("start ICMP server")
     server.serve_forever()
 
 

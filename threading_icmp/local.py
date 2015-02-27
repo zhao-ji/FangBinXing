@@ -73,10 +73,12 @@ class Socks5Server(SocketServer.StreamRequestHandler):
             if local in r:
                 logbook.info("local send")
                 identifier = self.client_address[1]
-                packet = icmp.pack(identifier, 0, local.recv(4096))
-                if remote.sendto(packet, REMOTE_ADDR) <= 0:
-                    logbook.info("local breaking down")
-                    break
+                logbook.info("identifier: {}".format(identifier))
+                local_data = local.recv(4096)
+                logbook.info("local data: {}".format(repr(local_data)))
+                if len(local_data) > 0:
+                    packet = icmp.pack(identifier, 0, local_data)
+                    remote.sendto(packet, REMOTE_ADDR)
             if remote in r:
                 logbook.info("remote send")
                 if local.send(icmp.unpack(remote.recv(4096))) <= 0:
