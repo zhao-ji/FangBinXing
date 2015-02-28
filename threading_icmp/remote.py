@@ -74,7 +74,7 @@ if __name__ == "__main__":
                 identifier, sequence, remote_recv)
             sock.sendto(packet, addr)
         else:
-            logbook.info("some situation occur, raw_data: {}"
-                         .format(raw_data))
+            logbook.info("some situation occur, raw_data:\n{}"
+                         .format(content))
             packet = icmp.pack_reply(identifier, sequence, content)
             sock.sendto(packet, addr)
