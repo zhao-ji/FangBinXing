@@ -10,7 +10,7 @@ import logbook
 
 import icmp
 
-REMOTE_ADDR = ("bandwagon.chashuibiao.org", 1)
+REMOTE_ADDR = ("chashuibiao.org", 1)
 
 
 class Socks5Server(SocketServer.StreamRequestHandler):
@@ -75,8 +75,9 @@ class Socks5Server(SocketServer.StreamRequestHandler):
                 if len(local_data) == 0:
                     logbook.info("local breaking down")
                     break
+                logbook.info("local data: {}".format(local_data))
                 logbook.info(
-                    "local data: {}".format(repr(local_data)))
+                    "local data len: {}".format(len(local_data)))
                 identifier = self.client_address[1]
                 logbook.info("identifier: {}".format(identifier))
                 if len(local_data) > 0:
@@ -97,8 +98,8 @@ def main():
     local_log.push_application()
 
     logbook.info("start connecting...")
-    server = SocketServer.ThreadingTCPServer(('', 777), Socks5Server)
-    logbook.info("start server at localhost in 777")
+    server = SocketServer.ThreadingTCPServer(('', 666), Socks5Server)
+    logbook.info("start server at localhost in 666")
     server.serve_forever()
 
 
