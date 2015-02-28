@@ -51,25 +51,27 @@ if __name__ == "__main__":
             if identifier not in demultiplexer:
                 logbook.info(
                     "not exist identifier: {}".format(identifier))
+                packet = icmp.pack_reply(
+                    identifier, sequence, content)
+                sock.sendto(packet, addr)
                 continue
 
             # start exchange the data between the two side
             remote = demultiplexer[identifier]
+
+            if len(content) <= 0:
+                logbook.info(
+                    "empty content, identifier: {}"
+                    .format(identifier))
+                remote.close()
+                demultiplexer.pop(identifier, 0)
+                continue
 
             logbook.info("the http body: {}".format(content))
             logbook.info("http body len: {}".format(len(content)))
             send_length = remote.send(content)
             logbook.info("send length :{}".format(send_length))
             remote_recv = remote.recv(4096)
-            # remote_recv = ''
-            # while True:
-            #     buf = remote.recv(1024)
-            #     if not len(buf):
-            #         break
-            #     remote_recv += buf
-            logbook.info("remote recv: {}".format(remote_recv))
-            logbook.info(
-                "remote recv len: {}".format(len(remote_recv)))
             packet = icmp.pack_reply(
                 identifier, sequence, remote_recv)
             sock.sendto(packet, addr)
@@ -78,3 +80,12 @@ if __name__ == "__main__":
                          .format(raw_data))
             packet = icmp.pack_reply(identifier, sequence, content)
             sock.sendto(packet, addr)
+            # remote_recv = ''
+            # while True:
+            #     buf = remote.recv(1024)
+            #     if not len(buf):
+            #         break
+            #     remote_recv += buf
+            # logbook.info("remote recv: {}".format(remote_recv))
+            # logbook.info(
+            #     "remote recv len: {}".format(len(remote_recv)))
