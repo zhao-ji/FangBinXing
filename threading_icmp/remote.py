@@ -71,21 +71,21 @@ if __name__ == "__main__":
             logbook.info("http body len: {}".format(len(content)))
             send_length = remote.send(content)
             logbook.info("send length :{}".format(send_length))
-            remote_recv = remote.recv(4096)
+            remote_recv = ''
+            while True:
+                buf = remote.recv(1024)
+                logbook.info("remote recv: \n\n{}".format(buf))
+                if not len(buf):
+                    break
+                remote_recv += buf
+            # remote_recv = remote.recv(4096)
+            logbook.info(
+                "remote recv len: {}".format(len(remote_recv)))
             packet = icmp.pack_reply(
                 identifier, sequence, remote_recv)
             sock.sendto(packet, addr)
         else:
-            logbook.info("some situation occur, raw_data:\n{}"
+            logbook.info("some situation occur, content:\n{}"
                          .format(content))
             packet = icmp.pack_reply(identifier, sequence, content)
             sock.sendto(packet, addr)
-            # remote_recv = ''
-            # while True:
-            #     buf = remote.recv(1024)
-            #     if not len(buf):
-            #         break
-            #     remote_recv += buf
-            # logbook.info("remote recv: {}".format(remote_recv))
-            # logbook.info(
-            #     "remote recv len: {}".format(len(remote_recv)))
