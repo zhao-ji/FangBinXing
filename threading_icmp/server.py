@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 
-from math import ceil
-import select
 import socket
 import SocketServer
-import struct
 
 import logbook
 
@@ -76,10 +73,9 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
                 icmp_body = "".join(["shards", str(len(pieces))])
         else:
             if any([identifier not in shards,
-                    sequence > len(shards[identifier]) - 1,
-                    ]):
+                    sequence > len(shards[identifier]) - 1]):
                 logbook.info("some situation occur, content:\n{}"
-                            .format(content))
+                             .format(content))
                 icmp_body = content
             else:
                 icmp_body = shards[identifier][sequence]
