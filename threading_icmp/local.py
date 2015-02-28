@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf8 -*-
 
-import select
 import socket
 import SocketServer
 import struct
@@ -64,6 +63,7 @@ class Socks5Server(SocketServer.StreamRequestHandler):
         logbook.info("first handshake reply: {}".format(_))
 
         # 5. Communicate
+        local = self.request
         while True:
             local_data = local.recv(4096)
             if len(local_data) == 0:
@@ -90,7 +90,7 @@ class Socks5Server(SocketServer.StreamRequestHandler):
                 local.send(recv)
 
 
-def main():
+if __name__ == '__main__':
     local_log = logbook.StderrHandler()
     local_log.format_string = (u'[{record.time:%H:%M:%S}] '
                                u'lineno:{record.lineno} '
@@ -101,7 +101,3 @@ def main():
     server = SocketServer.ThreadingTCPServer(('', 666), Socks5Server)
     logbook.info("start server at localhost in 666")
     server.serve_forever()
-
-
-if __name__ == '__main__':
-    main()
