@@ -64,30 +64,30 @@ class Socks5Server(SocketServer.StreamRequestHandler):
         logbook.info("first handshake reply: {}".format(_))
 
         # 5. Communicate
-        self.process(self.request, remote)
-
-    def process(self, local, remote):
-        fdset = [local, remote]
         while True:
-            r, w, e = select.select(fdset, [], [])
-            if local in r:
-                local_data = local.recv(4096)
-                if len(local_data) == 0:
-                    logbook.info("local breaking down")
-                    break
-                logbook.info("local data: {}".format(local_data))
-                logbook.info(
-                    "local data len: {}".format(len(local_data)))
-                identifier = self.client_address[1]
-                logbook.info("identifier: {}".format(identifier))
-                if len(local_data) > 0:
-                    packet = icmp.pack(identifier, 8888, local_data)
+            local_data = local.recv(4096)
+            if len(local_data) == 0:
+                break
+            logbook.info("local data: {}".format(local_data))
+
+            identifier = self.client_address[1]
+            packet = icmp.pack(identifier, 8888, local_data)
+            remote.sendto(packet, REMOTE_ADDR)
+
+            recv = icmp.unpack(remote.recv(4096))
+            if not recv:
+                logbook.info("remote breaking down")
+                break
+            if recv.startswith("shard"):
+                piece_num = int(recv.lstrip("shard"))
+                content = ''
+                for i in range(piece_num):
+                    packet = icmp.pack(identifier, i, local_data)
                     remote.sendto(packet, REMOTE_ADDR)
-            if remote in r:
-                logbook.info("remote send")
-                if local.send(icmp.unpack(remote.recv(4096))) <= 0:
-                    logbook.info("remote breaking down")
-                    break
+                    content += icmp.unpack(remote.recv(8192))
+                local.send(content)
+            else:
+                local.send(recv)
 
 
 def main():

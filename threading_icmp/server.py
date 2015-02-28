@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 
+from math import ceil
 import select
 import socket
 import SocketServer
@@ -13,6 +14,8 @@ from ThreadedICMPServer import ThreadedICMPServer
 
 # global socket dict: identifier and tcp-stream-socket
 demultiplexer = {}
+# global shards: identifier and piece list
+shards = {}
 
 class ICMPRequestHandler(SocketServer.BaseRequestHandler):
     '''
@@ -59,11 +62,29 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
                 else:
                     break
             logbook.info("remote_recv: {}".format(remote_recv))
-            icmp_body = remote_recv
+            if len(remote_recv) <= 8192:
+                icmp_body = remote_recv
+            else:
+                pieces = [
+                    remote_recv[start:start+8192]
+                    for start in range(0, len(remote_recv), 8192)
+                    ]
+
+                global shards
+                shards[identifier] = pieces
+
+                icmp_body = "".join(["shards", str(len(pieces))])
         else:
-            logbook.info("some situation occur, content:\n{}"
-                         .format(content))
-            icmp_body = content
+            if any([identifier not in shards,
+                    sequence > len(shards[identifier]) - 1,
+                    ]):
+                logbook.info("some situation occur, content:\n{}"
+                            .format(content))
+                icmp_body = content
+            else:
+                icmp_body = shards[identifier][sequence]
+                if sequence == len(shards[identifier]) - 1:
+                    shards.pop(identifier, 0)
 
         packet = icmp.pack_reply(identifier, sequence, icmp_body)
         local.sendto(packet, self.client_address)
