@@ -68,6 +68,6 @@ def unpack(data):
     return data[28:]
 
 def unpack_reply(data):
-    identifier, sequence = struct.unpack(">HH", data.strip()[24:28])
-    content = data.strip()[28:]
+    identifier, sequence = struct.unpack(">HH", data[24:28])
+    content = data[28:]
     return identifier, sequence, content
