@@ -1,19 +1,12 @@
 #! /usr/bin/env python
 # -*- coding: utf8 -*-
 
-import os
-import socket
 import struct
-import sys
-
-import logbook
 
 ICMP_ECHO_REPLY = 0
 ICMP_ECHO_REQUEST = 8
 ICMP_ECHO_CODE = 0
-
-def get_identifier():
-    return os.getpid() & 0xFFFF
+ICMP_INIT_CHECKSUM = 0
 
 def carry_around_add(a, b):
     c = a + b
@@ -33,11 +26,10 @@ def checksum(msg):
     return answer >> 8 | (answer << 8 & 0xff00)
 
 def pack(identifier, sequence, content):
-    init_checksum = 0
     header = struct.pack(
         ">bbHHH",
         ICMP_ECHO_REQUEST, ICMP_ECHO_CODE,
-        init_checksum, identifier, sequence)
+        ICMP_INIT_CHECKSUM, identifier, sequence)
 
     header_checksum = checksum(header + content)
 
@@ -49,11 +41,10 @@ def pack(identifier, sequence, content):
     return header + content
 
 def pack_reply(identifier, sequence, content):
-    init_checksum = 0
     header = struct.pack(
         ">bbHHH",
         ICMP_ECHO_REPLY, ICMP_ECHO_CODE,
-        init_checksum, identifier, sequence)
+        ICMP_INIT_CHECKSUM, identifier, sequence)
 
     header_checksum = checksum(header + content)
 
