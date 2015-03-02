@@ -78,7 +78,7 @@ class Socks5Server(SocketServer.StreamRequestHandler):
             if not recv:
                 logbook.info("remote breaking down")
                 break
-            if recv.startswith("shard"):
+            elif recv.startswith("shard"):
                 piece_num = int(recv.lstrip("shard"))
                 content = ''
                 for i in range(piece_num):
@@ -87,6 +87,8 @@ class Socks5Server(SocketServer.StreamRequestHandler):
                     content += icmp.unpack(remote.recv(8192))
                 local.send(content)
             else:
+                logbook.info("once recv: {}".format(recv))
+                logbook.info("once recv len: {}".format(len(recv)))
                 local.send(recv)
 
 
