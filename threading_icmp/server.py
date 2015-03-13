@@ -29,6 +29,7 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
             remote = socket.socket(
                 socket.AF_INET, socket.SOCK_STREAM)
             remote.connect(remote_addr)
+            remote.setblocking(1)
             logbook.info(
                 "connect the remote server: {}".format(remote_addr))
 
