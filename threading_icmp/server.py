@@ -29,7 +29,7 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
             remote = socket.socket(
                 socket.AF_INET, socket.SOCK_STREAM)
             remote.connect(remote_addr)
-            remote.setblocking(1)
+            remote.settimeout(0.5)
             logbook.info(
                 "connect the remote server: {}".format(remote_addr))
 
@@ -49,27 +49,25 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
                 remote.close()
                 demultiplexer.pop(identifier, 0)
 
-            logbook.info("the http body:\n\n{}".format(content))
+            logbook.info("send to remote:\n{}".format(content))
             remote.send(content)
 
             remote_recv = ''
             while True:
-                buf = remote.recv(8192)
-                # if len(buf) >= 8192:
-                if buf:
-                    logbook.info("buf: {}".format(buf))
-                    remote_recv += buf
-                else:
-                    # logbook.info("last buf: {}".format(buf))
-                    # remote_recv += buf
+                try:
+                    buf = remote.recv(8192)
+                except:
+                    logbook.info("empty buf")
                     break
-            logbook.info("remote_recv: {}".format(remote_recv))
-            if len(remote_recv) <= 8192:
+                else:
+                    logbook.info("buf:\n{}".format(buf))
+                    remote_recv += buf
+            if len(remote_recv) <= 8164:
                 icmp_body = remote_recv
             else:
                 pieces = [
-                    remote_recv[start:start+8192]
-                    for start in range(0, len(remote_recv), 8192)
+                    remote_recv[start:start+8164]
+                    for start in range(0, len(remote_recv), 8164)
                     ]
 
                 global shards
