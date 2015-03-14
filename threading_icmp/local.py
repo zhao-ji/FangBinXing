@@ -85,11 +85,11 @@ class Socks5Server(SocketServer.StreamRequestHandler):
                     packet = icmp.pack(identifier, i, local_data)
                     remote.sendto(packet, REMOTE_ADDR)
                     content += icmp.unpack(remote.recv(8192))
-                local.send(content)
+                local.sendall(content)
             else:
                 logbook.info("once recv: {}".format(recv))
                 logbook.info("once recv len: {}".format(len(recv)))
-                local.send(recv)
+                local.sendall(recv)
 
 
 if __name__ == '__main__':
