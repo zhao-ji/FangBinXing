@@ -69,7 +69,6 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
                     remote_recv[start:start+8164]
                     for start in range(0, len(remote_recv), 8164)
                     ]
-
                 global shards
                 shards[identifier] = pieces
 
@@ -83,6 +82,7 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
                 icmp_body = content
             else:
                 icmp_body = shards[identifier][sequence]
+                logbook.info("shard content:\n{}".format(icmp_body))
                 if sequence == len(shards[identifier]) - 1:
                     shards.pop(identifier, 0)
 

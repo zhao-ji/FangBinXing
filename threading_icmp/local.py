@@ -65,30 +65,34 @@ class Socks5Server(SocketServer.StreamRequestHandler):
         # 5. Communicate
         local = self.request
         while True:
-            local_data = local.recv(4096)
+            local_data = local.recv(8192)
             if len(local_data) == 0:
                 break
-            logbook.info("local data: {}".format(local_data))
+            logbook.info("local data:\n{}".format(local_data))
 
             identifier = self.client_address[1]
             packet = icmp.pack(identifier, 8888, local_data)
             remote.sendto(packet, REMOTE_ADDR)
 
-            recv = icmp.unpack(remote.recv(4096))
+            recv = icmp.unpack(remote.recv(8192))
+            logbook.info("once recv:\n{}".format(recv))
             if not recv:
                 logbook.info("remote breaking down")
                 break
-            elif recv.startswith("shard"):
-                piece_num = int(recv.lstrip("shard"))
+            elif recv.startswith("shards"):
+                piece_num = int(recv.lstrip("shards"))
+                logbook.info("piece num: {}".format(piece_num))
                 content = ''
                 for i in range(piece_num):
                     packet = icmp.pack(identifier, i, local_data)
                     remote.sendto(packet, REMOTE_ADDR)
+                    logbook.info("send piece {} request".format(i))
                     content += icmp.unpack(remote.recv(8192))
+                    logbook.info("recv piece {} request".format(i))
+                logbook.info("piece total:\n{}".format(content))
                 local.sendall(content)
             else:
-                logbook.info("once recv: {}".format(recv))
-                logbook.info("once recv len: {}".format(len(recv)))
+                logbook.info("once recv:\n{}".format(recv))
                 local.sendall(recv)
 
 
@@ -100,6 +104,6 @@ if __name__ == '__main__':
     local_log.push_application()
 
     logbook.info("start connecting...")
-    server = SocketServer.ThreadingTCPServer(('', 666), Socks5Server)
+    server = SocketServer.ThreadingTCPServer(('', 777), Socks5Server)
     logbook.info("start server at localhost in 666")
     server.serve_forever()
