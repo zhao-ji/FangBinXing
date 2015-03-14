@@ -65,16 +65,17 @@ class Socks5Server(SocketServer.StreamRequestHandler):
         # 5. Communicate
         local = self.request
         while True:
-            local_data = local.recv(4096)
+            local_data = local.recv(8192)
             if len(local_data) == 0:
                 break
-            logbook.info("local data: {}".format(local_data))
+            logbook.info("local data:\n{}".format(local_data))
 
             identifier = self.client_address[1]
             packet = icmp.pack(identifier, 8888, local_data)
             remote.sendto(packet, REMOTE_ADDR)
 
-            recv = icmp.unpack(remote.recv(4096))
+            recv = icmp.unpack(remote.recv(8192))
+            logbook.info("once recv:\n{}".format(recv))
             if not recv:
                 logbook.info("remote breaking down")
                 break
@@ -87,8 +88,8 @@ class Socks5Server(SocketServer.StreamRequestHandler):
                     content += icmp.unpack(remote.recv(8192))
                 local.send(content)
             else:
-                logbook.info("once recv: {}".format(recv))
-                logbook.info("once recv len: {}".format(len(recv)))
+                logbook.info("once recv:\n{}".format(recv))
+                # logbook.info("once recv len: {}".format(len(recv)))
                 local.send(recv)
 
 
@@ -100,6 +101,6 @@ if __name__ == '__main__':
     local_log.push_application()
 
     logbook.info("start connecting...")
-    server = SocketServer.ThreadingTCPServer(('', 666), Socks5Server)
+    server = SocketServer.ThreadingTCPServer(('', 777), Socks5Server)
     logbook.info("start server at localhost in 666")
     server.serve_forever()
