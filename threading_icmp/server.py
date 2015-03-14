@@ -54,10 +54,14 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
 
             remote_recv = ''
             while True:
-                buf = remote.recv(1024)
+                buf = remote.recv(8192)
+                # if len(buf) >= 8192:
                 if buf:
+                    logbook.info("buf: {}".format(buf))
                     remote_recv += buf
                 else:
+                    # logbook.info("last buf: {}".format(buf))
+                    # remote_recv += buf
                     break
             logbook.info("remote_recv: {}".format(remote_recv))
             if len(remote_recv) <= 8192:
@@ -74,7 +78,8 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
                 icmp_body = "".join(["shards", str(len(pieces))])
         else:
             if any([identifier not in shards,
-                    sequence > len(shards[identifier]) - 1]):
+                    sequence > len(shards.get(identifier, [])) - 1,
+                    ]):
                 logbook.info("some situation occur, content:\n{}"
                              .format(content))
                 icmp_body = content
@@ -83,6 +88,7 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
                 if sequence == len(shards[identifier]) - 1:
                     shards.pop(identifier, 0)
 
+        logbook.info("send back the content")
         packet = icmp.pack_reply(identifier, sequence, icmp_body)
         local.sendto(packet, self.client_address)
 
