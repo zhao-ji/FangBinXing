@@ -90,10 +90,10 @@ class Socks5Server(SocketServer.StreamRequestHandler):
                     content += icmp.unpack(remote.recv(8192))
                     logbook.info("recv piece {} request".format(i))
                 logbook.info("piece total:\n{}".format(content))
-                local.sendall(content)
+                local.send(content)
             else:
                 logbook.info("once recv:\n{}".format(recv))
-                local.sendall(recv)
+                local.send(recv)
 
 
 if __name__ == '__main__':
