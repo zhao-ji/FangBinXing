@@ -60,7 +60,7 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
                     logbook.info("empty buf")
                     break
                 else:
-                    logbook.info("buf:\n{}".format(buf))
+                    # logbook.info("buf:\n{}".format(buf))
                     remote_recv += buf
             if len(remote_recv) <= 8164:
                 icmp_body = remote_recv
@@ -77,12 +77,17 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
             if any([identifier not in shards,
                     sequence > len(shards.get(identifier, [])) - 1,
                     ]):
-                logbook.info("some situation occur, content:\n{}"
-                             .format(content))
+                logbook.info(
+                    "some situation occur, id {}, seq {}, data:\n{}"
+                    .format(identifier, sequence, content))
                 icmp_body = content
             else:
+                logbook.info(
+                    "shard num:\n{}"
+                    .format(len(shards[identifier])))
                 icmp_body = shards[identifier][sequence]
-                logbook.info("shard content:\n{}".format(icmp_body))
+                logbook.info("shard content:\n{}"
+                             .format(icmp_body[:10]))
                 if sequence == len(shards[identifier]) - 1:
                     shards.pop(identifier, 0)
 
