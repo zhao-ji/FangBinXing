@@ -60,7 +60,7 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
                     logbook.info("empty buf")
                     break
                 else:
-                    logbook.info("buf:\n{}".format(buf))
+                    # logbook.info("buf:\n{}".format(buf))
                     remote_recv += buf
             if len(remote_recv) <= 4096:
                 icmp_body = remote_recv
