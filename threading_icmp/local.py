@@ -46,9 +46,7 @@ class Socks5Server(SocketServer.StreamRequestHandler):
         # 3. Response
         reply_prefix = b"\x05\x00\x00\x01"
         reply_suffix = b"{}{}".format(
-            socket.inet_aton("0.0.0.0"),
-            struct.pack(">H", 65535),
-            )
+            socket.inet_aton("0.0.0.0"), struct.pack(">H", 65535))
         reply = b"{}{}".format(reply_prefix, reply_suffix)
         self.request.send(reply)
 
@@ -79,18 +77,27 @@ class Socks5Server(SocketServer.StreamRequestHandler):
             if not recv:
                 logbook.info("remote breaking down")
                 break
-            elif recv.startswith("shards"):
-                piece_num = int(recv.lstrip("shards"))
-                logbook.info("piece num: {}".format(piece_num))
-                content = ''
-                for i in range(piece_num):
-                    packet = icmp.pack(identifier, i, local_data)
+            elif recv == "shards":
+                while True:
+                    packet = icmp.pack(identifier, 9999, local_data)
                     remote.sendto(packet, REMOTE_ADDR)
-                    logbook.info("send piece {} request".format(i))
-                    content += icmp.unpack(remote.recv(8192))
-                    logbook.info("recv piece {} request".format(i))
-                logbook.info("piece total:\n{}".format(content))
-                local.send(content)
+                    content = icmp.unpack(remote.recv(8192))
+                    if content == "over":
+                        break
+                    else:
+                        local.send(content)
+            # elif recv.startswith("shards"):
+            #     piece_num = int(recv.lstrip("shards"))
+            #     logbook.info("piece num: {}".format(piece_num))
+            #     content = ''
+            #     for i in range(piece_num):
+            #         packet = icmp.pack(identifier, i, local_data)
+            #         remote.sendto(packet, REMOTE_ADDR)
+            #         logbook.info("send piece {} request".format(i))
+            #         content += icmp.unpack(remote.recv(8192))
+            #         logbook.info("recv piece {} request".format(i))
+            #     logbook.info("piece total:\n{}".format(content))
+            #     local.send(content)
             else:
                 logbook.info("once recv:\n{}".format(recv))
                 local.send(recv)

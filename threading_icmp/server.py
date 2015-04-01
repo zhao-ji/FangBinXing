@@ -62,29 +62,37 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
                 else:
                     logbook.info("buf:\n{}".format(buf))
                     remote_recv += buf
-            if len(remote_recv) <= 8164:
+            if len(remote_recv) <= 4096:
                 icmp_body = remote_recv
             else:
-                pieces = [
-                    remote_recv[start:start+8164]
-                    for start in range(0, len(remote_recv), 8164)
-                    ]
+                # pieces = [
+                #     remote_recv[start:start+8164]
+                #     for start in range(0, len(remote_recv), 8164)
+                #     ]
                 global shards
-                shards[identifier] = pieces
+                shards[identifier] = remote_recv
 
-                icmp_body = "".join(["shards", str(len(pieces))])
+                # icmp_body = "".join(["shards", str(len(pieces))])
+                icmp_body = "shards"
+        elif sequence == "9999":
+                global shards
+                if not shards.get(identifier, '') \
+                        or not len(shards.get(identifier, '')):
+                    icmp_body = "over"
+                else:
+                    icmp_body = shards[identifier][:4096]
+                    shards[identifier] = shards[identifier][4096:]
         else:
-            if any([identifier not in shards,
-                    sequence > len(shards.get(identifier, [])) - 1,
-                    ]):
-                logbook.info("some situation occur, content:\n{}"
-                             .format(content))
-                icmp_body = content
-            else:
-                icmp_body = shards[identifier][sequence]
-                logbook.info("shard content:\n{}".format(icmp_body))
-                if sequence == len(shards[identifier]) - 1:
-                    shards.pop(identifier, 0)
+            # if any([identifier not in shards,
+            #         sequence > len(shards.get(identifier, [])) - 1,
+            #         ]):
+            #     logbook.info("some situation occur, content:\n{}"
+            #                  .format(content))
+            #     icmp_body = content
+            icmp_body = shards[identifier][sequence]
+            logbook.info("shard content:\n{}".format(icmp_body))
+            if sequence == len(shards[identifier]) - 1:
+                shards.pop(identifier, 0)
 
         logbook.info("send back the content")
         packet = icmp.pack_reply(identifier, sequence, icmp_body)
