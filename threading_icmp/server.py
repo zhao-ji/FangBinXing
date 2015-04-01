@@ -19,6 +19,9 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
     ICMP
     '''
     def handle(self):
+        global demultiplexer
+        global shards
+
         raw_data, local = self.request
         identifier, sequence, content = icmp.unpack_reply(raw_data)
         logbook.info("identifier: {} sequence: {}"
@@ -33,7 +36,6 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
             logbook.info(
                 "connect the remote server: {}".format(remote_addr))
 
-            global demultiplexer
             demultiplexer[identifier] = remote
 
             icmp_body = 'ok'
@@ -69,13 +71,11 @@ class ICMPRequestHandler(SocketServer.BaseRequestHandler):
                 #     remote_recv[start:start+8164]
                 #     for start in range(0, len(remote_recv), 8164)
                 #     ]
-                global shards
                 shards[identifier] = remote_recv
 
                 # icmp_body = "".join(["shards", str(len(pieces))])
                 icmp_body = "shards"
         elif sequence == "9999":
-                global shards
                 if not shards.get(identifier, '') \
                         or not len(shards.get(identifier, '')):
                     icmp_body = "over"
