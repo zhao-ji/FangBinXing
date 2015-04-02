@@ -9,7 +9,7 @@ import logbook
 
 import icmp
 
-REMOTE_ADDR = ("chashuibiao.org", 1)
+REMOTE_ADDR = ("bandwagon.chashuibiao.org", 1)
 
 
 class Socks5Server(SocketServer.StreamRequestHandler):
@@ -63,7 +63,7 @@ class Socks5Server(SocketServer.StreamRequestHandler):
         # 5. Communicate
         local = self.request
         while True:
-            local_data = local.recv(8192)
+            local_data = local.recv(4096)
             if len(local_data) == 0:
                 break
             logbook.info("local data:\n{}".format(local_data))
@@ -86,20 +86,8 @@ class Socks5Server(SocketServer.StreamRequestHandler):
                         break
                     else:
                         local.send(content)
-            # elif recv.startswith("shards"):
-            #     piece_num = int(recv.lstrip("shards"))
-            #     logbook.info("piece num: {}".format(piece_num))
-            #     content = ''
-            #     for i in range(piece_num):
-            #         packet = icmp.pack(identifier, i, local_data)
-            #         remote.sendto(packet, REMOTE_ADDR)
-            #         logbook.info("send piece {} request".format(i))
-            #         content += icmp.unpack(remote.recv(8192))
-            #         logbook.info("recv piece {} request".format(i))
-            #     logbook.info("piece total:\n{}".format(content))
-            #     local.send(content)
             else:
-                logbook.info("once recv:\n{}".format(recv))
+                logbook.info("once recv:\n{}".format(repr(recv)))
                 local.send(recv)
 
 
@@ -111,6 +99,6 @@ if __name__ == '__main__':
     local_log.push_application()
 
     logbook.info("start connecting...")
-    server = SocketServer.ThreadingTCPServer(('', 777), Socks5Server)
+    server = SocketServer.ThreadingTCPServer(('', 666), Socks5Server)
     logbook.info("start server at localhost in 666")
     server.serve_forever()
